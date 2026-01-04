@@ -39,19 +39,6 @@ cd gloable-radio
 - npm 9+（建议使用 `npm ci`）
 - Docker 20+（仅 Docker 部署需要）
 
-## 本地安装与开发
-
-```bash
-npm ci
-npm run dev -- --host 0.0.0.0 --port 4173
-```
-
-浏览器访问：
-- http://localhost:4173/
-
-外网访问：
-- http://<你的服务器IP>:4173/
-
 ## 构建与预览
 
 ```bash
@@ -61,6 +48,9 @@ npm run preview -- --host 0.0.0.0 --port 4173
 
 浏览器访问：
 - http://localhost:4173/
+- 
+外网访问：
+- http://<你的服务器IP>:4173/
 
 ## 生产部署（静态站点）
 
