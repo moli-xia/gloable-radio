@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body, #app {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+    background-color: #F2F2F7;
+    color: #1C1C1E;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  .dark body {
+    background-color: #000000;
+    color: #FFFFFF;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  .ios-card {
+    @apply bg-white rounded-ios shadow-ios border border-gray-100 transition-all duration-300;
+  }
+  
+  .dark .ios-card {
+    @apply bg-dark-card border-dark-gray shadow-dark-ios;
+  }
+  
+  .ios-button {
+    @apply px-4 py-2 rounded-ios font-medium transition-all duration-200 active:scale-95;
+  }
+  
+  .ios-button-primary {
+    @apply ios-button bg-ios-blue text-white hover:bg-blue-600;
+  }
+  
+  .ios-button-secondary {
+    @apply ios-button bg-ios-light-gray text-ios-dark-gray hover:bg-gray-200;
+  }
+  
+  .dark .ios-button-secondary {
+    @apply bg-dark-gray text-dark-text hover:bg-dark-light-gray;
+  }
+  
+  .ios-input {
+    @apply w-full px-4 py-3 rounded-ios border border-gray-200 focus:border-ios-blue focus:ring-2 focus:ring-ios-blue focus:ring-opacity-20 outline-none transition-all;
+  }
+  
+  .dark .ios-input {
+    @apply bg-dark-card border-dark-gray text-dark-text focus:border-ios-blue;
+  }
+  
+  .glass-effect {
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .dark .glass-effect {
+    background: rgba(28, 28, 30, 0.8);
+  }
+  
+  /* 响应式容器 */
+  .container-responsive {
+    @apply w-full mx-auto px-4;
+    @apply mobile:px-4;
+    @apply tablet:px-6 tablet:max-w-4xl;
+    @apply desktop:px-8 desktop:max-w-6xl;
+  }
+  
+  /* 响应式网格 */
+  .grid-responsive {
+    @apply grid gap-4;
+    @apply mobile:grid-cols-1;
+    @apply tablet:grid-cols-2;
+    @apply desktop:grid-cols-3 desktop:gap-6;
+  }
+  
+  .grid-responsive-large {
+    @apply grid gap-4;
+    @apply mobile:grid-cols-1;
+    @apply tablet:grid-cols-2;
+    @apply desktop:grid-cols-4 desktop:gap-6;
+  }
+  
+  .playing-animation {
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 暗色模式滚动条 */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

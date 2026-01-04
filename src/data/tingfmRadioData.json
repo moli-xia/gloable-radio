@@ -1,0 +1,158 @@
+[
+  {
+    "uuid": "tingfm-677",
+    "name": "BBC Radio 2",
+    "country": "United Kingdom",
+    "language": "English",
+    "tags": [
+      "music",
+      "english",
+      "uk",
+      "bbc"
+    ],
+    "homepage": "https://tingfm.com/radio/677",
+    "favicon": "",
+    "clickCount": 9390,
+    "streamUrls": [
+      {
+        "url": "https://ytcast.radio.cn/81/radios/677/index_677.m3u8",
+        "quality": "high",
+        "format": "m3u8"
+      }
+    ],
+    "description": "BBC Radio 2 - Music radio station"
+  },
+  {
+    "uuid": "tingfm-17589",
+    "name": "CNBC Live Audio",
+    "country": "China",
+    "language": "Chinese",
+    "tags": [
+      "music",
+      "chinese",
+      "china"
+    ],
+    "homepage": "https://tingfm.com/radio/17589",
+    "favicon": "",
+    "clickCount": 1152,
+    "streamUrls": [
+      {
+        "url": "https://ytcast.radio.cn/81/radios/17589/index_17589.m3u8",
+        "quality": "high",
+        "format": "m3u8"
+      }
+    ],
+    "description": "CNBC Live Audio - Music radio station"
+  },
+  {
+    "uuid": "tingfm-1205",
+    "name": "Fox News Radio",
+    "country": "United States",
+    "language": "English",
+    "tags": [
+      "news",
+      "english",
+      "usa",
+      "fox"
+    ],
+    "homepage": "https://tingfm.com/radio/1205",
+    "favicon": "",
+    "clickCount": 9052,
+    "streamUrls": [
+      {
+        "url": "https://ytcast.radio.cn/81/radios/1205/index_1205.m3u8",
+        "quality": "high",
+        "format": "m3u8"
+      }
+    ],
+    "description": "Fox News Radio - News radio station"
+  },
+  {
+    "uuid": "tingfm-17070",
+    "name": "KGAK",
+    "country": "China",
+    "language": "Chinese",
+    "tags": [
+      "music",
+      "chinese",
+      "china"
+    ],
+    "homepage": "https://tingfm.com/radio/17070",
+    "favicon": "",
+    "clickCount": 9362,
+    "streamUrls": [
+      {
+        "url": "https://ytcast.radio.cn/81/radios/17070/index_17070.m3u8",
+        "quality": "high",
+        "format": "m3u8"
+      }
+    ],
+    "description": "KGAK - Music radio station"
+  },
+  {
+    "uuid": "tingfm-4067",
+    "name": "MSNBC Live Audio",
+    "country": "China",
+    "language": "Chinese",
+    "tags": [
+      "music",
+      "chinese",
+      "china"
+    ],
+    "homepage": "https://tingfm.com/radio/4067",
+    "favicon": "",
+    "clickCount": 9928,
+    "streamUrls": [
+      {
+        "url": "https://ytcast.radio.cn/81/radios/4067/index_4067.m3u8",
+        "quality": "high",
+        "format": "m3u8"
+      }
+    ],
+    "description": "MSNBC Live Audio - Music radio station"
+  },
+  {
+    "uuid": "tingfm-4700",
+    "name": "WIP 94.1 FM",
+    "country": "China",
+    "language": "Chinese",
+    "tags": [
+      "music",
+      "chinese",
+      "china"
+    ],
+    "homepage": "https://tingfm.com/radio/4700",
+    "favicon": "",
+    "clickCount": 9766,
+    "streamUrls": [
+      {
+        "url": "https://ytcast.radio.cn/81/radios/4700/index_4700.m3u8",
+        "quality": "high",
+        "format": "m3u8"
+      }
+    ],
+    "description": "WIP 94.1 FM - Music radio station"
+  },
+  {
+    "uuid": "tingfm-14957",
+    "name": "中廣音樂網",
+    "country": "Taiwan",
+    "language": "Chinese",
+    "tags": [
+      "music",
+      "chinese",
+      "taiwan"
+    ],
+    "homepage": "https://tingfm.com/radio/14957",
+    "favicon": "",
+    "clickCount": 6686,
+    "streamUrls": [
+      {
+        "url": "https://ytcast.radio.cn/81/radios/14957/index_14957.m3u8",
+        "quality": "high",
+        "format": "m3u8"
+      }
+    ],
+    "description": "中廣音樂網 - Music radio station"
+  }
+]

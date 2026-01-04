@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.env
+.env.*
+.vscode
+.idea
+android
+*.log
+README.md
+nginx-static.conf
+deploy.sh
