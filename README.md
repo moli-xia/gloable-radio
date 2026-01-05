@@ -18,6 +18,8 @@
 ## 演示站点
 ### https://aabb.live
 
+### 现已加入https://kejilion.sh 科技lion的脚本，实现一键安装并配置域名和SSL证书功能。
+
 ## 应用截图
 ![](demo-w.png)
 ![](demo-b.png)
@@ -46,7 +48,6 @@
 docker pull superneed/global-radio:latest
 docker run -d --name global-radio --restart unless-stopped -p 8080:80 superneed/global-radio:latest
 ```
-
 浏览器访问：
 - http://localhost:8080/
 
