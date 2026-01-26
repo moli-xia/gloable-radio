@@ -1,4 +1,6 @@
-FROM node:18-alpine AS build
+ARG BUILDPLATFORM
+
+FROM --platform=$BUILDPLATFORM node:18-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

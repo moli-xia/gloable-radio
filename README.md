@@ -51,6 +51,15 @@ docker run -d --name global-radio --restart unless-stopped -p 8080:80 superneed/
 浏览器访问：
 - http://localhost:8080/
 
+#### ARM/arm64 设备部署
+
+如果你的服务器是 ARM 架构（例如 aarch64 / arm64），请使用 arm64 专用镜像：
+
+```bash
+docker pull superneed/global-radio-arm64:latest
+docker run -d --name global-radio --restart unless-stopped -p 8080:80 superneed/global-radio-arm64:latest
+```
+
 ### 方式 B：本地构建镜像并运行（可选）
 
 安装 Docker（Linux 示例；也可使用官方文档的安装方式）：
