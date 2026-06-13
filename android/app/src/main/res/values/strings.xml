@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">全球电台</string>
-    <string name="title_activity_main">全球电台</string>
+    <string name="app_name">Global Radio</string>
+    <string name="title_activity_main">Global Radio</string>
     <string name="package_name">com.globalradio.app</string>
     <string name="custom_url_scheme">com.globalradio.app</string>
+    <string name="menu_server_settings">Server Settings</string>
 </resources>

@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">راديو عالمي</string>
+    <string name="title_activity_main">راديو عالمي</string>
+    <string name="menu_server_settings">إعدادات الخادم</string>
+</resources>

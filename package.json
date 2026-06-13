@@ -1,17 +1,34 @@
 {
   "name": "radio-app",
   "private": true,
-  "version": "0.0.0",
+    "version": "2.0.2",
+  "description": "Global Radio client shell and web app",
+  "author": "GlobalRadio",
   "type": "module",
+  "main": "desktop/main.mjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "android:build": "npm run build && npx cap sync android",
+    "android:build": "npx cap sync android",
+    "android:sync": "npx cap sync android",
     "android:open": "npx cap open android",
     "android:run": "npx cap run android",
+    "ios:build": "npx cap sync ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "desktop:dev": "electron desktop/main.mjs",
+    "desktop:start": "electron desktop/main.mjs",
+    "desktop:pack:win": "electron-builder --win --x64",
+    "desktop:pack:win:arm64": "electron-builder --win --arm64",
+    "desktop:pack:linux": "electron-builder --linux --x64",
+    "desktop:pack:mac": "electron-builder --mac",
+    "release:build": "bash scripts/release-build.sh",
+    "release:publish": "bash scripts/release-publish.sh",
+    "version:bump": "node scripts/bump-version.mjs",
     "capacitor:init": "npx cap init",
     "capacitor:add-android": "npx cap add android",
+    "capacitor:add-ios": "npx cap add ios",
     "capacitor:sync": "npx cap sync",
     "apk:debug": "cd android && ./gradlew assembleDebug",
     "apk:release": "cd android && ./gradlew assembleRelease"
@@ -25,6 +42,7 @@
     "@heroicons/vue": "^2.0.18",
     "@jofr/capacitor-media-session": "^3.0.3",
     "axios": "^1.6.2",
+    "hls.js": "^1.6.16",
     "pinia": "^2.1.7",
     "vite-plugin-pwa": "^1.0.0",
     "vue": "^3.3.11",
@@ -37,6 +55,8 @@
     "@types/node": "^20.10.5",
     "@vitejs/plugin-vue": "^4.5.2",
     "autoprefixer": "^10.4.16",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.3.6",
     "terser": "^5.43.1",
@@ -47,6 +67,54 @@
   "optionalDependencies": {
     "@capacitor/android": "^5.7.8",
     "@capacitor/cli": "^5.7.8",
-    "@capacitor/core": "^5.7.8"
+    "@capacitor/core": "^5.7.8",
+    "@capacitor/ios": "^5.7.8"
+  },
+  "build": {
+    "appId": "com.globalradio.app",
+    "productName": "GlobalRadio",
+    "asar": true,
+    "directories": {
+      "output": "dist-desktop",
+      "buildResources": "build"
+    },
+    "extraMetadata": {
+      "main": "desktop/main.mjs"
+    },
+    "files": [
+      "desktop/**/*",
+      "shell/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "GlobalRadio_${version}_${arch}-setup.${ext}",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GlobalRadio"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "AudioVideo",
+      "artifactName": "GlobalRadio_${version}_${arch}.${ext}",
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.music",
+      "artifactName": "GlobalRadio_${version}_${arch}.${ext}",
+      "icon": "build/icon.png"
+    }
   }
 }

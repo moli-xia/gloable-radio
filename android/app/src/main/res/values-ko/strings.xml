@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">글로벌 라디오</string>
+    <string name="title_activity_main">글로벌 라디오</string>
+    <string name="menu_server_settings">서버 설정</string>
+</resources>

@@ -20,3 +20,7 @@ android/.idea
 android/build
 android/app/build
 android/app/src/main/assets/public
+
+dist-desktop
+release
+config/users.json

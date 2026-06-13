@@ -109,18 +109,27 @@ export const useLanguageStore = defineStore('language', () => {
   const t = computed(() => {
     return (key: string) => {
       const keys = key.split('.')
-      let value: any = translations[currentLanguage.value]
-      
-      for (const k of keys) {
-        if (value && typeof value === 'object' && k in value) {
-          value = value[k]
-        } else {
-          console.warn(`Translation key not found: ${key}`)
-          return key
+      const resolve = (language: SupportedLanguage) => {
+        let value: any = translations[language]
+
+        for (const k of keys) {
+          if (value && typeof value === 'object' && k in value) {
+            value = value[k]
+          } else {
+            return undefined
+          }
         }
+
+        return typeof value === 'string' ? value : undefined
       }
-      
-      return typeof value === 'string' ? value : key
+
+      const localized = resolve(currentLanguage.value) ?? resolve('en')
+      if (localized !== undefined) {
+        return localized
+      }
+
+      console.warn(`Translation key not found: ${key}`)
+      return key
     }
   })
   
@@ -134,6 +143,9 @@ export const useLanguageStore = defineStore('language', () => {
     currentLanguage.value = language
     isAutoDetected.value = false
     localStorage.setItem('radio-language', language)
+    import('@/services/userDataSyncTrigger').then(({ scheduleUserDataPush }) => {
+      scheduleUserDataPush()
+    })
   }
   
   // 自动检测语言（基于系统语言）

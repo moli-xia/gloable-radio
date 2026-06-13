@@ -1,0 +1,6 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Radio Global</string>
+    <string name="title_activity_main">Radio Global</string>
+    <string name="menu_server_settings">Configuración del servidor</string>
+</resources>

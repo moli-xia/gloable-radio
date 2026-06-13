@@ -1,5 +1,11 @@
 <template>
-  <div class="min-h-screen bg-ios-light-gray dark:bg-dark-bg transition-colors duration-300">
+  <div v-if="!authStore.initialized" class="min-h-screen bg-ios-light-gray dark:bg-dark-bg" />
+
+  <div v-else-if="isLoginPage" class="min-h-screen bg-ios-light-gray dark:bg-dark-bg transition-colors duration-300">
+    <router-view />
+  </div>
+
+  <div v-else class="min-h-screen bg-ios-light-gray dark:bg-dark-bg transition-colors duration-300">
     <!-- PC端顶部导航 -->
     <TopNavigation />
     
@@ -28,7 +34,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { usePlayerStore } from '@/stores/player'
 import { useRadioStore } from '@/stores/radio'
 import { useThemeStore } from '@/stores/theme'
@@ -40,12 +47,17 @@ import TopNavigation from '@/components/TopNavigation.vue'
 import ErrorToast from '@/components/ErrorToast.vue'
 import ToastContainer from '@/components/ToastContainer.vue'
 import BackToTopButton from '@/components/BackToTopButton.vue'
-// MediaControl插件已移除
+import { useAuthStore } from '@/stores/auth'
+import { useUserSyncStore } from '@/stores/userSync'
 
+const route = useRoute()
+const authStore = useAuthStore()
+const userSyncStore = useUserSyncStore()
 const playerStore = usePlayerStore()
 const radioStore = useRadioStore()
 const themeStore = useThemeStore()
 const languageStore = useLanguageStore()
+const isLoginPage = computed(() => route.name === 'Login')
 
 // 用户首次交互处理
 let userInteracted = false
@@ -69,6 +81,12 @@ const handleFirstUserInteraction = () => {
 // 权限检查函数已移除
 
 onMounted(async () => {
+  await authStore.restoreSession()
+
+  if (authStore.isAuthenticated) {
+    await userSyncStore.pullFromServer(true)
+  }
+
   // 初始化主题（同步操作，不阻塞）
   themeStore.initTheme()
   

@@ -40,6 +40,10 @@
         
         <!-- 右侧操作 -->
         <div class="flex items-center gap-3">
+          <span v-if="authStore.user" class="text-sm text-ios-gray dark:text-dark-secondary">
+            {{ authStore.user.username }}
+          </span>
+
           <!-- 搜索快速入口 -->
           <button 
             @click="$router.push('/search')"
@@ -63,6 +67,14 @@
           >
             <Cog6ToothIcon class="w-5 h-5 text-ios-gray dark:text-dark-secondary" />
           </button>
+
+          <button
+            v-if="authStore.user"
+            class="px-3 py-2 rounded-ios text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            @click="handleLogout"
+          >
+            {{ languageStore.t('auth.logoutShort') }}
+          </button>
         </div>
       </div>
     </div>
@@ -71,6 +83,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   HomeIcon,
   MagnifyingGlassIcon,
@@ -83,8 +96,19 @@ import {
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import LanguageToggle from '@/components/LanguageToggle.vue'
 import { useLanguageStore } from '@/stores/language'
+import { useAuthStore } from '@/stores/auth'
+import { usePlayerStore } from '@/stores/player'
 
+const router = useRouter()
 const languageStore = useLanguageStore()
+const authStore = useAuthStore()
+const playerStore = usePlayerStore()
+
+const handleLogout = async () => {
+  playerStore.stopStation()
+  await authStore.logout()
+  await router.replace({ name: 'Login' })
+}
 
 const navigationItems = computed(() => [
   {

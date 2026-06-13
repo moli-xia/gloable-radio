@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed, nextTick } from 'vue'
+import Hls from 'hls.js'
 import type { RadioStation, PlayerState, FavoriteStation } from '@/types/radio'
 import { useHistoryStore } from './history'
 import { mediaSessionManager } from '@/utils/mediaSession'
 import { deviceOptimization } from '@/utils/deviceOptimization'
+import { isHlsStream, resolveStreamUrl, supportsNativeHls } from '@/utils/streamUrl'
 // MediaControl插件已移除
 import { Capacitor } from '@capacitor/core'
 import { MediaSession } from '@jofr/capacitor-media-session'
@@ -24,6 +26,79 @@ export const usePlayerStore = defineStore('player', () => {
   const sleepTimerInterval = ref<NodeJS.Timeout | null>(null)
   const originalVolume = ref(0.8)
   const isDucked = ref(false)
+  const hlsInstance = ref<Hls | null>(null)
+
+  const destroyHls = () => {
+    if (hlsInstance.value) {
+      hlsInstance.value.destroy()
+      hlsInstance.value = null
+    }
+  }
+
+  const applyAudioOutputSettings = () => {
+    if (!audio.value) return
+    audio.value.volume = isDucked.value ? volume.value * 0.3 : volume.value
+    audio.value.muted = isMuted.value
+  }
+
+  const createHlsInstance = (): Hls => {
+    return new Hls({
+      enableWorker: true,
+      lowLatencyMode: true
+    })
+  }
+
+  const playWithHls = async (streamUrl: string): Promise<void> => {
+    if (!audio.value) {
+      throw new Error('音频元素未初始化')
+    }
+
+    destroyHls()
+
+    if (Hls.isSupported()) {
+      const hls = createHlsInstance()
+      hlsInstance.value = hls
+      hls.attachMedia(audio.value)
+      hls.loadSource(streamUrl)
+
+      await new Promise<void>((resolve, reject) => {
+        const onParsed = () => {
+          cleanup()
+          resolve()
+        }
+        const onError = (_event: string, data: { fatal?: boolean }) => {
+          if (!data.fatal) return
+          cleanup()
+          reject(new Error('HLS 流加载失败'))
+        }
+        const cleanup = () => {
+          hls.off(Hls.Events.MANIFEST_PARSED, onParsed)
+          hls.off(Hls.Events.ERROR, onError)
+        }
+
+        hls.on(Hls.Events.MANIFEST_PARSED, onParsed)
+        hls.on(Hls.Events.ERROR, onError)
+      })
+    } else if (supportsNativeHls(audio.value)) {
+      audio.value.src = streamUrl
+      audio.value.load()
+    } else {
+      throw new Error('当前浏览器不支持 HLS 播放')
+    }
+
+    await audio.value.play()
+  }
+
+  const playDirectStream = async (streamUrl: string): Promise<void> => {
+    if (!audio.value) {
+      throw new Error('音频元素未初始化')
+    }
+
+    destroyHls()
+    audio.value.src = streamUrl
+    audio.value.load()
+    await audio.value.play()
+  }
 
   // 计算属性
   const playerState = computed<PlayerState>(() => ({
@@ -180,22 +255,22 @@ export const usePlayerStore = defineStore('player', () => {
       // 如果正在播放其他电台，先停止
       if (currentStation.value && currentStation.value.stationuuid !== station.stationuuid) {
         audio.value!.pause()
+        destroyHls()
         await nextTick()
       }
       
       // 设置新的电台
       currentStation.value = station
       addToHistory(station)
-      
-      // 原生播放器代码已移除，直接使用Web播放器
-      
-      // 设置音频源
-      audio.value!.src = station.url_resolved || station.url
-      audio.value!.volume = isDucked.value ? volume.value * 0.3 : volume.value
-      audio.value!.muted = isMuted.value
-      
-      audio.value!.load()
-      await audio.value!.play()
+
+      const streamUrl = resolveStreamUrl(station)
+      applyAudioOutputSettings()
+
+      if (isHlsStream(station, streamUrl)) {
+        await playWithHls(streamUrl)
+      } else {
+        await playDirectStream(streamUrl)
+      }
       
       console.log(`成功播放电台: ${station.name}`)
       
@@ -240,8 +315,11 @@ export const usePlayerStore = defineStore('player', () => {
 
   // 停止播放
   const stopStation = async () => {
+    destroyHls()
     if (audio.value) {
       audio.value.pause()
+      audio.value.removeAttribute('src')
+      audio.value.load()
       audio.value.currentTime = 0
     }
     isPlaying.value = false
@@ -263,6 +341,9 @@ export const usePlayerStore = defineStore('player', () => {
     
     // 保存到本地存储
     localStorage.setItem('radio-volume', volume.value.toString())
+    import('@/services/userDataSyncTrigger').then(({ scheduleUserDataPush }) => {
+      scheduleUserDataPush()
+    })
   }
 
   // 切换静音
@@ -274,6 +355,9 @@ export const usePlayerStore = defineStore('player', () => {
     
     // 保存到本地存储
     localStorage.setItem('radio-muted', isMuted.value.toString())
+    import('@/services/userDataSyncTrigger').then(({ scheduleUserDataPush }) => {
+      scheduleUserDataPush()
+    })
   }
 
   // 添加到收藏夹
@@ -330,6 +414,9 @@ export const usePlayerStore = defineStore('player', () => {
   // 保存收藏夹到本地存储
   const saveFavorites = () => {
     localStorage.setItem('radio-favorites', JSON.stringify(favorites.value))
+    import('@/services/userDataSyncTrigger').then(({ scheduleUserDataPush }) => {
+      scheduleUserDataPush()
+    })
   }
 
   // 从本地存储加载收藏夹

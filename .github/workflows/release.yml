@@ -1,0 +1,201 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v2.0.0). Will be created if it does not exist.'
+        required: true
+        default: 'v2.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-33 build-tools;33.0.2'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor (Android)
+        run: npx cap sync android
+
+      - name: Build Android release APK
+        run: |
+          cd android
+          ./gradlew clean assembleRelease --no-daemon
+
+      - name: Rename APK
+        run: |
+          mkdir -p release
+          VERSION=$(node -p "require('./package.json').version")
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             release/GlobalRadio-v${VERSION}.apk
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: release/*.apk
+
+  ios:
+    name: iOS IPA (unsigned)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor (iOS)
+        run: npx cap sync ios
+
+      - name: Install CocoaPods
+        run: |
+          cd ios/App
+          pod install --repo-update
+
+      - name: Build unsigned iOS archive
+        run: |
+          cd ios/App
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            archive
+
+      - name: Package unsigned IPA
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          mkdir -p "$RUNNER_TEMP/Payload"
+          cp -R "$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app" \
+                "$RUNNER_TEMP/Payload/"
+          mkdir -p release
+          (cd "$RUNNER_TEMP" && zip -qry "$GITHUB_WORKSPACE/release/GlobalRadio-${VERSION}.ipa" Payload)
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: release/*.ipa
+
+  windows:
+    name: Windows x64 setup
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Electron toolchain
+        run: npm install --no-save electron@33.4.11 electron-builder@25.1.8
+
+      - name: Build Windows x64 installer
+        run: npx electron-builder --win --x64 --publish=never
+
+      - name: Stage Windows installer
+        run: |
+          mkdir -p release
+          VERSION=$(node -p "require('./package.json').version")
+          cp dist-desktop/GlobalRadio_${VERSION}_x64-setup.exe release/
+        shell: bash
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: release/*.exe
+
+  publish:
+    name: Publish GitHub Release
+    needs: [android, ios, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          ls -la release/
+          BODY=$(cat <<'EOF'
+          提供 Windows 64 位、iPhone、Android 客户端。
+          如出现异常，请清除应用缓存即可。
+
+          本 fork 在 [moli-xia/global-radio](https://github.com/moli-xia/global-radio) 的客户端壳基础上新增多用户登录、服务端数据同步、HLS 流代理等能力。
+
+          ## Assets
+          - `GlobalRadio-v<version>.apk` — Android release APK (shell mode)
+          - `GlobalRadio-<version>.ipa` — iOS unsigned IPA (sideload only; not App Store signed)
+          - `GlobalRadio_<version>_x64-setup.exe` — Windows 64-bit installer (Electron NSIS)
+          EOF
+          )
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/* --clobber
+          else
+            gh release create "$TAG" release/* \
+              --title "各平台客户端 $TAG" \
+              --notes "$BODY" \
+              --latest
+          fi

@@ -141,12 +141,64 @@
       </section>
 
       <section class="ios-card p-4">
+        <h2 class="text-lg font-semibold text-ios-dark-gray dark:text-dark-text mb-4">{{ t('auth.account') }}</h2>
+
+        <div class="space-y-4">
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-sm text-ios-dark-gray dark:text-dark-text">{{ t('auth.currentUser').replace('{username}', authStore.user?.username || '') }}</p>
+              <p class="text-xs text-ios-gray dark:text-dark-secondary mt-1">{{ t('auth.dataBound') }}</p>
+            </div>
+            <button
+              class="px-4 py-2 rounded-ios bg-red-500 text-white hover:bg-red-600 transition-colors shrink-0"
+              @click="handleLogout"
+            >
+              {{ t('auth.logout') }}
+            </button>
+          </div>
+
+          <div class="border-t border-gray-200 dark:border-dark-gray pt-4 space-y-3">
+            <h3 class="text-sm font-semibold text-ios-dark-gray dark:text-dark-text">{{ t('auth.changePassword') }}</h3>
+            <input
+              v-model="currentPassword"
+              type="password"
+              autocomplete="current-password"
+              class="ios-input"
+              :placeholder="t('auth.currentPasswordPlaceholder')"
+            />
+            <input
+              v-model="newPassword"
+              type="password"
+              autocomplete="new-password"
+              class="ios-input"
+              :placeholder="t('auth.newPasswordPlaceholder')"
+            />
+            <input
+              v-model="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              class="ios-input"
+              :placeholder="t('auth.confirmPasswordPlaceholder')"
+            />
+            <p v-if="passwordError" class="text-sm text-red-500">{{ passwordError }}</p>
+            <button
+              class="ios-button-primary w-full sm:w-auto px-6 py-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              :disabled="changingPassword || !currentPassword || !newPassword || !confirmPassword"
+              @click="handleChangePassword"
+            >
+              {{ changingPassword ? t('auth.saving') : t('auth.savePassword') }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="ios-card p-4">
         <h2 class="text-lg font-semibold text-ios-dark-gray dark:text-dark-text mb-4">{{ t('settings.aboutApp') }}</h2>
         
         <div class="space-y-3">
           <div class="flex justify-between">
             <span class="text-ios-gray dark:text-dark-secondary">{{ t('settings.version') }}</span>
-            <span class="text-ios-dark-gray dark:text-dark-text">1.0.0</span>
+            <span class="text-ios-dark-gray dark:text-dark-text">{{ appVersion }}</span>
           </div>
           
           <div class="flex justify-between">
@@ -173,9 +225,13 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
 import { usePlayerStore } from '@/stores/player'
 import { useLanguageStore } from '@/stores/language'
 import { useToastStore } from '@/stores/toast'
+import { useAuthStore } from '@/stores/auth'
+import { changePassword } from '@/services/authApi'
 // MediaControl插件已移除
 import ThemeToggle from '@/components/ThemeToggle.vue'
 import { 
@@ -183,10 +239,19 @@ import {
 } from '@heroicons/vue/24/outline'
 
 const playerStore = usePlayerStore()
+const authStore = useAuthStore()
+const router = useRouter()
 const { t } = useLanguageStore()
 const toastStore = useToastStore()
 
+const appVersion = __APP_VERSION__
+
 const customMinutes = ref<number>(30)
+const currentPassword = ref('')
+const newPassword = ref('')
+const confirmPassword = ref('')
+const passwordError = ref('')
+const changingPassword = ref(false)
 
 // 权限相关变量已移除
 
@@ -230,6 +295,53 @@ const formatTimeText = (minutes: number): string => {
 const clearSleepTimer = () => {
   playerStore.clearSleepTimer()
   toastStore.showInfo(t('settings.timerCancelled'))
+}
+
+const handleLogout = async () => {
+  playerStore.stopStation()
+  await authStore.logout()
+  await router.replace({ name: 'Login' })
+}
+
+const handleChangePassword = async () => {
+  passwordError.value = ''
+
+  if (newPassword.value.length < 6) {
+    passwordError.value = t('auth.passwordTooShort')
+    return
+  }
+
+  if (newPassword.value !== confirmPassword.value) {
+    passwordError.value = t('auth.passwordMismatch')
+    return
+  }
+
+  changingPassword.value = true
+
+  try {
+    await changePassword(currentPassword.value, newPassword.value)
+    currentPassword.value = ''
+    newPassword.value = ''
+    confirmPassword.value = ''
+    toastStore.showSuccess(t('auth.passwordChangeSuccess'))
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      passwordError.value = t('auth.wrongCurrentPassword')
+    } else if (axios.isAxiosError(error) && typeof error.response?.data?.error === 'string') {
+      const message = error.response.data.error
+      if (message.includes('at least 6 characters')) {
+        passwordError.value = t('auth.passwordTooShort')
+      } else if (message.includes('different from current password')) {
+        passwordError.value = t('auth.passwordSameAsOld')
+      } else {
+        passwordError.value = t('auth.passwordChangeFailed')
+      }
+    } else {
+      passwordError.value = t('auth.passwordChangeFailed')
+    }
+  } finally {
+    changingPassword.value = false
+  }
 }
 
 const deviceType = computed(() => {

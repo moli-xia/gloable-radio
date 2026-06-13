@@ -14,18 +14,36 @@ type CacheOptions = {
   bypassCache?: boolean
 }
 
+// Where the user's own backend lives. On Capacitor / Electron the page is
+// served from the user's domain after the shell redirect, so a relative URL
+// resolves to the right origin. On dev / preview it points to the same
+// origin too (Vite serves the SPA, the docker image fronts /api/radio).
+function getLocalProxyBaseUrl(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    return `${window.location.origin}/api/radio`
+  } catch {
+    return '/api/radio'
+  }
+}
+
 class RadioAPI {
   private apiProviders: APIProvider[] = [
-    // Radio Browser API (primary)
-    { name: 'Radio Browser US1', baseURL: 'https://us1.api.radio-browser.info', type: 'radio-browser', isAvailable: true, priority: 1 },   
+    // Same-origin proxy on the user's backend (stream-proxy/server.mjs). The
+    // user's server has reliable upstream connectivity and avoids CORS /
+    // mobile-network blocks against radio-browser.info entirely. We try it
+    // first and only fall back to the public mirrors if the user is running
+    // an old build without /api/radio enabled.
+    { name: 'Local Server Proxy', baseURL: getLocalProxyBaseUrl(), type: 'radio-browser', isAvailable: true, priority: 0 },
+    // Radio Browser API (public mirrors, fallback)
+    { name: 'Radio Browser US1', baseURL: 'https://us1.api.radio-browser.info', type: 'radio-browser', isAvailable: true, priority: 1 },
     { name: 'Radio Browser DE1', baseURL: 'https://de1.api.radio-browser.info', type: 'radio-browser', isAvailable: true, priority: 1 },
     { name: 'Radio Browser NL1', baseURL: 'https://nl1.api.radio-browser.info', type: 'radio-browser', isAvailable: true, priority: 1 },
     { name: 'Radio Browser FR1', baseURL: 'https://fr1.api.radio-browser.info', type: 'radio-browser', isAvailable: true, priority: 1 },
     { name: 'Radio Browser AT1', baseURL: 'https://at1.api.radio-browser.info', type: 'radio-browser', isAvailable: true, priority: 1 },
     { name: 'Radio Browser ALL', baseURL: 'https://all.api.radio-browser.info', type: 'radio-browser', isAvailable: true, priority: 1 }
   ]
-  
-  private userAgent = 'RadioApp/1.0'
+
   private currentAPI: AxiosInstance
   private currentProvider: APIProvider
   private initializationPromise: Promise<void> | null = null
@@ -73,12 +91,13 @@ class RadioAPI {
   }
 
   private createAPIInstance(provider: APIProvider, timeoutMs: number = 10000): AxiosInstance {
+    // We intentionally do NOT set User-Agent or Content-Type here. Browsers
+    // strip User-Agent on XHR/fetch anyway, and setting Content-Type on a
+    // body-less GET triggers a CORS preflight that some upstream mirrors do
+    // not answer correctly (which surfaces in WebViews as "Network Error").
     return axios.create({
       baseURL: provider.baseURL,
-      timeout: timeoutMs,
-      headers: {
-        'User-Agent': this.userAgent
-      }
+      timeout: timeoutMs
     })
   }
 
@@ -234,19 +253,15 @@ class RadioAPI {
 
       if (this.debugEnabled) console.log('搜索参数:', searchParams)
       
+      // Keep this as a "simple" CORS request: no body, no custom headers, so
+      // no OPTIONS preflight. Browsers strip User-Agent / Content-Type from
+      // XHR anyway, and setting them only triggers preflight that some
+      // radio-browser mirrors don't answer (visible as Network Error in
+      // mobile WebViews).
       const response = await this.currentAPI.get('/json/stations/search', {
         params: searchParams,
-        headers: {
-          'Accept-Charset': 'UTF-8',
-          'Content-Type': 'application/json; charset=UTF-8',
-          'User-Agent': this.userAgent
-        },
-        // 确保axios正确处理URL编码
         paramsSerializer: {
-          encode: (param: string) => {
-            // 让axios自动处理编码，支持中文
-            return encodeURIComponent(param)
-          }
+          encode: (param: string) => encodeURIComponent(param)
         }
       })
       

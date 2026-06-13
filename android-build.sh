@@ -13,29 +13,15 @@ fi
 echo "📦 安装 Capacitor 依赖..."
 npm install @capacitor/core @capacitor/cli @capacitor/android
 
-# 构建Vue项目
-echo "🔨 构建Vue项目..."
-npm run build
-
-# 初始化Capacitor（如果尚未初始化）
-if [ ! -f "capacitor.config.ts" ]; then
-    echo "⚙️ 初始化 Capacitor..."
-    npx cap init "GlobalRadio" "com.globalradio.app" --web-dir=dist
-fi
-
 # 添加Android平台（如果尚未添加）
 if [ ! -d "android" ]; then
     echo "📱 添加 Android 平台..."
     npx cap add android
 fi
 
-# 同步项目到Android
-echo "🔄 同步项目到 Android..."
+# 同步 shell 到 Android
+echo "🔄 同步 shell 到 Android..."
 npx cap sync android
-
-# 复制Web资源到Android
-echo "📋 复制资源文件..."
-npx cap copy android
 
 echo "✅ 构建准备完成！"
 echo ""

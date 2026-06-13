@@ -48,6 +48,9 @@ export const useThemeStore = defineStore('theme', () => {
   const setMode = (newMode: ThemeMode) => {
     mode.value = newMode
     localStorage.setItem('theme-mode', newMode)
+    import('@/services/userDataSyncTrigger').then(({ scheduleUserDataPush }) => {
+      scheduleUserDataPush()
+    })
   }
 
   // 切换主题模式

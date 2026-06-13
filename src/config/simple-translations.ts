@@ -1,4 +1,5 @@
 import type { SupportedLanguage } from '@/stores/language'
+import { mergeAuthTranslations } from '@/config/auth-translations'
 
 // 简化的翻译配置，用于所有支持的语言
 export const createSimpleTranslations = (): Record<SupportedLanguage, any> => {
@@ -219,7 +220,7 @@ export const createSimpleTranslations = (): Record<SupportedLanguage, any> => {
     }
   }
 
-  return {
+  const translations = {
     zh: {
       nav: {
         home: '首页',
@@ -2928,4 +2929,6 @@ export const createSimpleTranslations = (): Record<SupportedLanguage, any> => {
       }
     }
   }
+
+  return mergeAuthTranslations(translations)
 }

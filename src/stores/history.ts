@@ -87,6 +87,9 @@ export const useHistoryStore = defineStore('history', () => {
   const saveHistory = () => {
     try {
       localStorage.setItem('radio-history', JSON.stringify(history.value))
+      import('@/services/userDataSyncTrigger').then(({ scheduleUserDataPush }) => {
+        scheduleUserDataPush()
+      })
     } catch (error) {
       console.error('保存历史记录失败:', error)
     }

@@ -511,6 +511,9 @@ const clearHistory = () => {
 
 const saveHistory = () => {
   localStorage.setItem('radio-search-history', JSON.stringify(searchHistory.value))
+  import('@/services/userDataSyncTrigger').then(({ scheduleUserDataPush }) => {
+    scheduleUserDataPush()
+  })
 }
 
 const loadHistory = () => {

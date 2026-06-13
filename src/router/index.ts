@@ -3,16 +3,28 @@ import Home from '@/views/Home.vue'
 import Search from '@/views/Search.vue'
 import Favorites from '@/views/Favorites.vue'
 import History from '@/views/History.vue'
+import Login from '@/views/Login.vue'
+import { useAuthStore } from '@/stores/auth'
+import { useLanguageStore } from '@/stores/language'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/login',
+      name: 'Login',
+      component: Login,
+      meta: {
+        titleKey: 'routes.login',
+        public: true
+      }
+    },
+    {
       path: '/',
       name: 'Home',
       component: Home,
       meta: {
-        title: '首页'
+        titleKey: 'routes.home'
       }
     },
     {
@@ -20,7 +32,7 @@ const router = createRouter({
       name: 'Search',
       component: Search,
       meta: {
-        title: '搜索'
+        titleKey: 'routes.search'
       }
     },
     {
@@ -28,7 +40,7 @@ const router = createRouter({
       name: 'History',
       component: History,
       meta: {
-        title: '足迹'
+        titleKey: 'routes.history'
       }
     },
     {
@@ -36,7 +48,7 @@ const router = createRouter({
       name: 'Favorites',
       component: Favorites,
       meta: {
-        title: '收藏'
+        titleKey: 'routes.favorites'
       }
     },
     {
@@ -44,7 +56,7 @@ const router = createRouter({
       name: 'Settings',
       component: () => import('@/views/Settings.vue'),
       meta: {
-        title: '设置'
+        titleKey: 'routes.settings'
       }
     },
     {
@@ -52,26 +64,47 @@ const router = createRouter({
       name: 'StationDetail',
       component: () => import('@/views/StationDetail.vue'),
       meta: {
-        title: '电台详情'
+        titleKey: 'routes.stationDetail'
       }
     }
   ],
   scrollBehavior(_to, _from, savedPosition) {
-    // 如果有保存的滚动位置（如按了后退按钮），恢复到该位置
     if (savedPosition) {
       return savedPosition
     }
-    // 否则滚动到页面顶部
     return { top: 0 }
   }
 })
 
-// 路由守卫
-router.beforeEach((to, _from, next) => {
-  // 设置页面标题
-  if (to.meta.title) {
-          document.title = `${to.meta.title} - 全球电台`
+router.beforeEach(async (to, _from, next) => {
+  const authStore = useAuthStore()
+  const languageStore = useLanguageStore()
+
+  if (!authStore.initialized) {
+    await authStore.restoreSession()
   }
+
+  if (typeof to.meta.titleKey === 'string') {
+    document.title = `${languageStore.t(to.meta.titleKey)} - ${languageStore.t('routes.appTitle')}`
+  }
+
+  if (to.meta.public) {
+    if (to.name === 'Login' && authStore.isAuthenticated) {
+      next(typeof to.query.redirect === 'string' ? to.query.redirect : '/')
+      return
+    }
+    next()
+    return
+  }
+
+  if (!authStore.isAuthenticated) {
+    next({
+      name: 'Login',
+      query: { redirect: to.fullPath }
+    })
+    return
+  }
+
   next()
 })
 
